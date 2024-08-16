@@ -7,6 +7,8 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
+app.use(express.static("dist"));
+
 morgan.token("body", (req) => {
   if (req.method == "POST") return JSON.stringify(req.body);
 });
@@ -37,10 +39,6 @@ const data = [
     number: "39-23-6423122",
   },
 ];
-
-app.get("/", (req, res) => {
-  res.end("<h1>Hello from the server</h1>");
-});
 
 app.get("/info", (req, res) => {
   const time = new Date(Date.now());
