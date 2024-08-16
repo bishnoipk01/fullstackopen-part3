@@ -33,20 +33,13 @@ app.get("/api/persons", (req, res, next) => {
     .catch((err) => next(err));
 });
 
-app.post("/api/persons", (req, res, err) => {
+app.post("/api/persons", (req, res, next) => {
   const { name, number } = req.body;
-  if (!name || !number)
-    res.json({
-      status: "error",
-      message: "name and number both should be present",
-    });
-  else {
-    const person = new Person({ name, number });
-    person
-      .save()
-      .then((saved) => res.json(saved))
-      .catch((err) => next(err));
-  }
+  const person = new Person({ name, number });
+  person
+    .save()
+    .then((saved) => res.json(saved))
+    .catch((err) => next(err));
 });
 
 app.get("/api/persons/:id", (req, res, next) => {
@@ -68,13 +61,17 @@ app.put("/api/persons/:id", (req, res, next) => {
       message: "number should be present",
     });
   else {
-    Person.findOneAndUpdate({ name }, { name, number })
+    Person.findOneAndUpdate(
+      { name },
+      { name, number },
+      { new: true, runValidators: true, context: "query" }
+    )
       .then((updated) => res.json(updated))
       .catch((err) => next(err));
   }
 });
 
-app.delete("/api/persons/:id", (req, res) => {
+app.delete("/api/persons/:id", (req, res, next) => {
   const id = req.params.id;
   Person.findByIdAndDelete({ id })
     .then(() => res.status(204).send())
@@ -90,6 +87,8 @@ const errorHandler = (err, req, res, next) => {
 
   if (err.name === "CastError") {
     return res.status(400).send({ error: "malformatted id" });
+  } else if (err.name === "ValidationError") {
+    return res.status(400).json({ error: err.message });
   }
   res.status(500).json({ status: "fail", message: "something went wrong!" });
 };
