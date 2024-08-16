@@ -1,6 +1,8 @@
 const express = require("express");
 const morgan = require("morgan");
 const cors = require("cors");
+const Person = require("./models/person");
+const { default: mongoose } = require("mongoose");
 
 const app = express();
 
@@ -17,37 +19,14 @@ const format =
 
 app.use(morgan(format));
 
-const data = [
-  {
-    id: "1",
-    name: "Arto Hellas",
-    number: "040-123456",
-  },
-  {
-    id: "2",
-    name: "Ada Lovelace",
-    number: "39-44-5323523",
-  },
-  {
-    id: "3",
-    name: "Dan Abramov",
-    number: "12-43-234345",
-  },
-  {
-    id: "4",
-    name: "Mary Poppendieck",
-    number: "39-23-6423122",
-  },
-];
-
-app.get("/info", (req, res) => {
-  const time = new Date(Date.now());
-  const output = `<p>Phone has info for ${data.length} people <br/> ${time}`;
-  res.send(output);
-});
+// app.get("/info", (req, res) => {
+//   const time = new Date(Date.now());
+//   const output = `<p>Phone has info for ${data.length} people <br/> ${time}`;
+//   res.send(output);
+// });
 
 app.get("/api/persons", (req, res) => {
-  res.json(data);
+  const data = Person.find({}).then((data) => res.json(data));
 });
 
 app.post("/api/persons", (req, res) => {
@@ -57,34 +36,25 @@ app.post("/api/persons", (req, res) => {
       status: "error",
       message: "name and number both should be present",
     });
-  else if (data.find((obj) => obj.name === name))
-    res.json({ error: "name must be unique" });
+  // else if (data.find((obj) => obj.name === name))
+  //   res.json({ error: "name must be unique" });
   else {
-    const id = Math.floor(Math.random() * 100);
-    const newObj = { id, name, number };
-    data.push(newObj);
-    res.send("recond added successfully");
+    const person = new Person({ name, number });
+    person.save().then((saved) => res.json(saved));
   }
 });
 
 app.get("/api/persons/:id", (req, res) => {
   const id = req.params.id;
-  if (id > data.length)
-    res
-      .status(404)
-      .json({ status: "not found", message: `no record found with id ${id}` });
-  const record = data.filter((obj) => obj.id === id);
-  if (record.length > 0) res.json(record);
-  else res.status(404).send("not found");
+  Person.findById({ id }).then((person) => {
+    if (!person.length) res.json("no person found with that id");
+    else res.json(person);
+  });
 });
 
 app.delete("/api/persons/:id", (req, res) => {
   const id = req.params.id;
-  const index = data.findIndex((obj) => obj.id === id);
-  data.splice(index, 1);
-  res
-    .status(200)
-    .json({ status: "success", message: `record deleted successfully!` });
+  Person.deleteOne({ id }).then(() => res.json("deleted successfully!"));
 });
 
 app.get("*", (req, res) => {
