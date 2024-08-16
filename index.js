@@ -89,6 +89,10 @@ app.delete("/api/persons/:id", (req, res) => {
     .json({ status: "success", message: `record deleted successfully!` });
 });
 
+app.get("*", (req, res) => {
+  res.send("<h1>404 not found</h1>");
+});
+
 const PORT = process.env.PORT || 3001;
 
 app.listen(PORT, () => console.log(`app is listening at port ${PORT}`));
